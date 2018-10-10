@@ -26,7 +26,7 @@ public class HTTPSession {
     
     // MARK: - Lifecycle
 	
-    public init(accessToken: String, delegateQueue: DispatchQueue = DispatchQueue(label: "com.tatey.lifx-http-kit.http-session", attributes: []), baseURL: URL = Defaults.baseURL, userAgent: String = Defaults.userAgent, timeout: TimeInterval = Defaults.timeout, log: Bool = false) {
+    public init(accessToken: String, delegateQueue: DispatchQueue = DispatchQueue(label: "com.tatey.lifx-http-kit.http-session", attributes: []), baseURL: URL = Defaults.baseURL, userAgent: String = Defaults.userAgent, timeout: TimeInterval = Defaults.timeout, maxRequests: Int = 3, log: Bool = false) {
 		self.baseURL = baseURL
 		self.delegateQueue = delegateQueue
         self.log = log
@@ -37,7 +37,7 @@ public class HTTPSession {
 		session = URLSession(configuration: configuration)
 		
 		operationQueue = OperationQueue()
-		operationQueue.maxConcurrentOperationCount = 1
+		operationQueue.maxConcurrentOperationCount = maxRequests
 	}
 	
     /// Lists lights limited by `selector`.

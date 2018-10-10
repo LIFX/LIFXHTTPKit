@@ -50,6 +50,7 @@ public class Client {
 	}
 	
 	public func fetchLights(completionHandler: ((_ error: Error?) -> Void)? = nil) {
+        let requestedAt = Date()
 		session.lights("all") { [weak self] (request, response, lights, error) in
 			if error != nil {
 				completionHandler?(error)
@@ -58,11 +59,18 @@ public class Client {
 			
 			if let strongSelf = self {
 				let oldLights = strongSelf.lights
-				let newLights = lights
+				var newLights = lights
 				if oldLights != newLights {
-					strongSelf.lights = newLights
+                    newLights = newLights.map { newLight in
+                        if let oldLight = oldLights.first(where: { $0.id == newLight.id }), oldLight.isDirty {
+                            return oldLight.light(withUpdatedLight: newLight, requestedAt: requestedAt)
+                        } else {
+                            return newLight
+                        }
+                    }
+                    strongSelf.lights = newLights
 					for observer in strongSelf.observers {
-						observer.lightsDidUpdateHandler(lights)
+						observer.lightsDidUpdateHandler(newLights)
 					}
 				}
 				
@@ -102,7 +110,18 @@ public class Client {
 		return lightTargetWithSelector(LightTargetSelector(type: .All))
 	}
 	
+    /// Creates a target for API requests with the given selector. If an ID selector is specified and the Light is not already
+    /// contained in the cache, then a placeholder light will be created so that events can be subscribed to.
+    ///
+    /// - Parameter selector: Selector referring to a Scene/Group/Light etc.
+    /// - Returns: LightTarget which can be used to trigger API requests against the specified Selector
 	public func lightTargetWithSelector(_ selector: LightTargetSelector) -> LightTarget {
+        switch selector.type {
+        case .ID:
+            // Add light to cache if not already present
+            updateLights([Light(id: selector.value, power: false, brightness: 0, color: Color(hue: 0, saturation: 0, kelvin: 3500), product: nil, label: "", connected: true, inFlightProperties: [], dirtyProperties: [])])
+        default: break
+        }
 		return LightTarget(client: self, selector: selector, filter: selectorToFilter(selector))
 	}
 	
