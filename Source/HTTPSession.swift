@@ -131,7 +131,6 @@ public class HTTPSession {
                 print(wrapped)
             }
         })
-        operationQueue.operations.first?.addDependency(operation)
         operationQueue.addOperation(operation)
     }
     

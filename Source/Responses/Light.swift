@@ -5,7 +5,7 @@
 
 import Foundation
 
-public struct Light: Decodable, Equatable, CustomStringConvertible {
+public struct Light: Codable, Equatable, CustomStringConvertible {
     public enum MutableProperties: String, Equatable {
         case power, brightness, color
     }
@@ -63,6 +63,20 @@ public struct Light: Decodable, Equatable, CustomStringConvertible {
         location = try container.decodeIfPresent(Location.self, forKey: .location)
         dirtyProperties = []
         inFlightProperties = []
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        let powerString = power ? "on" : "off"
+        try container.encode(powerString, forKey: .power)
+        try container.encode(brightness, forKey: .brightness)
+        try container.encode(color, forKey: .color)
+        try container.encodeIfPresent(product, forKey: .product)
+        try container.encode(label, forKey: .label)
+        try container.encode(connected, forKey: .connected)
+        try container.encode(group, forKey: .group)
+        try container.encode(location, forKey: .location)
     }
     
     private enum CodingKeys: String, CodingKey {

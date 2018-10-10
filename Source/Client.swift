@@ -7,8 +7,8 @@ import Foundation
 
 public class Client {
 	public let session: HTTPSession
-	public private(set) var lights: [Light]
-	public private(set) var scenes: [Scene]
+	public internal(set) var lights: [Light]
+	public internal(set) var scenes: [Scene]
     public private(set) var themes: [Theme]
 	private var observers: [ClientObserver]
 	

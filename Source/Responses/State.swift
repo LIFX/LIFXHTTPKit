@@ -5,7 +5,7 @@
 
 import Foundation
 
-public struct State: Decodable, Equatable {
+public struct State: Codable, Equatable {
 	public let selector: LightTargetSelector
 	public let brightness: Double?
 	public let color: Color?
