@@ -31,9 +31,10 @@ public class HTTPSession {
 		self.delegateQueue = delegateQueue
         self.log = log
 		
-		let configuration = URLSessionConfiguration.default
+		let configuration = URLSessionConfiguration.ephemeral
 		configuration.httpAdditionalHeaders = ["Authorization": "Bearer \(accessToken)", "Accept": "appplication/json", "User-Agent": userAgent]
 		configuration.timeoutIntervalForRequest = timeout
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
 		session = URLSession(configuration: configuration)
 		
 		operationQueue = OperationQueue()
@@ -60,6 +61,15 @@ public class HTTPSession {
             completionHandler(request.toURLRequest(), response.response, response.body?.results ?? [], response.error)
         }
 	}
+    
+    public func togglePower(_ selector: String, duration: Float, completionHandler: @escaping ((_ request: URLRequest, _ response: URLResponse?, _ results: [Result], _ error: Error?) -> Void)) {
+        let body = TogglePowerRequest(duration: duration)
+        let request = HTTPRequest<TogglePowerRequest>(baseURL: baseURL, path: "lights/\(selector)/toggle", method: .post, headers: ["Content-Type": "application/json"], body: body, expectedStatusCodes: [200, 207])
+        
+        perform(request: request) { (response: HTTPResponse<Results>) in
+            completionHandler(request.toURLRequest(), response.response, response.body?.results ?? [], response.error)
+        }
+    }
     
     /// Lists all scenes.
     /// GET /scenes

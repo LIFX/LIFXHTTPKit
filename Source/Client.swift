@@ -7,8 +7,8 @@ import Foundation
 
 public class Client {
 	public let session: HTTPSession
-	public internal(set) var lights: [Light]
-	public internal(set) var scenes: [Scene]
+	public private(set) var lights: [Light]
+	public private(set) var scenes: [Scene]
     public private(set) var themes: [Theme]
 	private var observers: [ClientObserver]
 	
@@ -52,33 +52,47 @@ public class Client {
 	public func fetchLights(completionHandler: ((_ error: Error?) -> Void)? = nil) {
         let requestedAt = Date()
 		session.lights("all") { [weak self] (request, response, lights, error) in
-			if error != nil {
+			guard let `self` = self, error == nil else {
 				completionHandler?(error)
 				return
 			}
 			
-			if let strongSelf = self {
-				let oldLights = strongSelf.lights
-				var newLights = lights
-				if oldLights != newLights {
-                    newLights = newLights.map { newLight in
-                        if let oldLight = oldLights.first(where: { $0.id == newLight.id }), oldLight.isDirty {
-                            return oldLight.light(withUpdatedLight: newLight, requestedAt: requestedAt)
-                        } else {
-                            return newLight
-                        }
-                    }
-                    strongSelf.lights = newLights
-					for observer in strongSelf.observers {
-						observer.lightsDidUpdateHandler(newLights)
-					}
-				}
-				
-			}
-			
+			self.handleUpdated(lights: lights, requestedAt: requestedAt)
 			completionHandler?(nil)
 		}
 	}
+    
+    public func fetchLight(_ selector: LightTargetSelector, completionHandler: ((_ error: Error?) -> Void)? = nil) {
+        guard selector.type != .SceneID else {
+            completionHandler?(nil)
+            return
+        }
+        let requestedAt = Date()
+        session.lights(selector.toQueryStringValue()) { [weak self] (request, response, lights, error) in
+            guard let `self` = self, error == nil else {
+                completionHandler?(error)
+                return
+            }
+            
+            self.handleUpdated(lights: lights, requestedAt: requestedAt)
+            completionHandler?(nil)
+        }
+    }
+    
+    private func handleUpdated(lights: [Light], requestedAt: Date) {
+        let oldLights = self.lights
+        var newLights = lights
+        if oldLights != newLights {
+            newLights = newLights.map { newLight in
+                if let oldLight = oldLights.first(where: { $0.id == newLight.id }), oldLight.isDirty {
+                    return oldLight.light(withUpdatedLight: newLight, requestedAt: requestedAt)
+                } else {
+                    return newLight
+                }
+            }
+            updateLights(newLights)
+        }
+    }
 	
 	public func fetchScenes(completionHandler: ((_ error: Error?) -> Void)? = nil) {
 		session.scenes { [weak self] (request, response, scenes, error) in
@@ -119,7 +133,9 @@ public class Client {
         switch selector.type {
         case .ID:
             // Add light to cache if not already present
-            updateLights([Light(id: selector.value, power: false, brightness: 0, color: Color(hue: 0, saturation: 0, kelvin: 3500), product: nil, label: "", connected: true, inFlightProperties: [], dirtyProperties: [])])
+            if !lights.contains(where: { $0.id == selector.value }) {
+                updateLights([Light(id: selector.value, power: false, brightness: 0, color: Color(hue: 0, saturation: 0, kelvin: 3500), product: nil, label: "", connected: true, inFlightProperties: [], dirtyProperties: [])])                
+            }
         default: break
         }
 		return LightTarget(client: self, selector: selector, filter: selectorToFilter(selector))
@@ -142,26 +158,27 @@ public class Client {
 	
 	func updateLights(_ lights: [Light]) {
 		let oldLights = self.lights
-		var newLights: [Light] = []
+		var newLights: [Light] = lights
 		
-		for light in lights {
-			if !newLights.contains(where: { $0.id == light.id }) {
-				newLights.append(light)
+		for oldLight in oldLights {
+			if !newLights.contains(where: { $0.id == oldLight.id }) {
+				newLights.append(oldLight)
 			}
 		}
-		for light in oldLights {
-			if !newLights.contains(where: { $0.id == light.id }) {
-				newLights.append(light)
-			}
-		}
+        
+        newLights.sort(by: { $0.id < $1.id })
 		
 		if oldLights != newLights {
+            self.lights = newLights
 			for observer in observers {
 				observer.lightsDidUpdateHandler(newLights)
 			}
-			self.lights = newLights
 		}
 	}
+    
+    func updateScenes(_ scenes: [Scene]) {
+        self.scenes = scenes
+    }
 	
 	private func selectorToFilter(_ selector: LightTargetSelector) -> LightTargetFilter {
 		switch selector.type {

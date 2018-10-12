@@ -6,8 +6,9 @@
 import Foundation
 
 public struct Light: Codable, Equatable, CustomStringConvertible {
+    /// Toggle differs from a power state change because at the time the change is made the power state is indeterminate
     public enum MutableProperties: String, Equatable {
-        case power, brightness, color
+        case power, brightness, color, toggle
     }
     struct DirtyProperty: Equatable {
         let updatedAt: Date
@@ -134,6 +135,9 @@ public struct Light: Codable, Equatable, CustomStringConvertible {
                 mutLight = mutLight.lightWithProperties(color: color)
             case .power:
                 mutLight = mutLight.lightWithProperties(power)
+            case .toggle:
+                // Toggle is in flight, so flip whatever the state from the cloud was
+                mutLight = mutLight.lightWithProperties(!mutLight.power)
             }
         }
         return mutLight.lightWithProperties(inFlightProperties: inFlightProperties, dirtyProperties: stillDirtyProperties)

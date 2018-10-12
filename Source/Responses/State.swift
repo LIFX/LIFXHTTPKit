@@ -26,6 +26,15 @@ public struct State: Codable, Equatable {
         color = try container.decode(Color.self, forKey: .color)
     }
     
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(selector.toQueryStringValue(), forKey: .selector)
+        let powerString = (power ?? false) ? "on" : "off"
+        try container.encode(powerString, forKey: .power)
+        try container.encode(brightness, forKey: .brightness)
+        try container.encode(color, forKey: .color)
+    }
+    
     private enum CodingKeys: String, CodingKey {
         case selector
         case brightness
