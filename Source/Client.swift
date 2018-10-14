@@ -9,18 +9,16 @@ public class Client {
 	public let session: HTTPSession
 	public private(set) var lights: [Light]
 	public private(set) var scenes: [Scene]
-    public private(set) var themes: [Theme]
 	private var observers: [ClientObserver]
 	
-    public convenience init(accessToken: String, lights: [Light]? = nil, scenes: [Scene]? = nil, themes: [Theme]? = nil) {
-        self.init(session: HTTPSession(accessToken: accessToken), lights: lights, scenes: scenes, themes: themes)
+    public convenience init(accessToken: String, lights: [Light]? = nil, scenes: [Scene]? = nil) {
+        self.init(session: HTTPSession(accessToken: accessToken), lights: lights, scenes: scenes)
 	}
 	
-    public init(session: HTTPSession, lights: [Light]? = nil, scenes: [Scene]? = nil, themes: [Theme]? = nil) {
+    public init(session: HTTPSession, lights: [Light]? = nil, scenes: [Scene]? = nil) {
 		self.session = session
 		self.lights = lights ?? []
 		self.scenes = scenes ?? []
-        self.themes = themes ?? []
 		observers = []
 	}
 	
@@ -106,19 +104,6 @@ public class Client {
 			completionHandler?(nil)
 		}
 	}
-    
-    public func fetchThemes(completionHandler: ((_ error: Error?) -> Void)? = nil) {
-        session.curatedThemes { [weak self] (request, response, themes, error) in
-            if error != nil {
-                completionHandler?(error)
-                return
-            }
-            
-            self?.themes = themes
-            
-            completionHandler?(nil)
-        }
-    }
 	
 	public func allLightTarget() -> LightTarget {
 		return lightTargetWithSelector(LightTargetSelector(type: .All))

@@ -92,28 +92,6 @@ public class HTTPSession {
         }
 	}
     
-    /// List curated themes.
-    /// GET https://cloud.lifx.com/themes/v1/curated
-    public func curatedThemes(_ completionHandler: @escaping ((_ request: URLRequest, _ response: URLResponse?, _ themes: [Theme], _ error: Error?) -> Void)) {
-        guard let curatedThemesURL = URL(string: "https://cloud.lifx.com/themes/v1/curated") else { return }
-        let request = HTTPRequest<EmptyRequest>(baseURL: curatedThemesURL, path: nil)
-        
-        perform(request: request) { (response: HTTPResponse<[Theme]>) in
-            completionHandler(request.toURLRequest(), response.response, response.body ?? [], response.error)
-        }
-    }
-    
-    /// Apply `theme` to `selector` over a `duration`.
-    /// PUT /themes/{selector}
-    public func applyTheme(_ selector: String, theme: String, duration: Float, completionHandler: @escaping ((_ request: URLRequest, _ response: URLResponse?, _ results: [Result], _ error: Error?) -> Void)) {
-        let body = ThemeRequest(theme: theme, duration: duration)
-        let request = HTTPRequest<ThemeRequest>(baseURL: baseURL, path: "themes/\(selector)", method: .put, headers: ["Content-Type": "application/json"], body: body, expectedStatusCodes: [200, 207])
-        
-        perform(request: request) { (response: HTTPResponse<Results>) in
-            completionHandler(request.toURLRequest(), response.response, response.body?.results ?? [], response.error)
-        }
-    }
-    
     // MARK: - Deprecated
     
     @available(*, deprecated, message: "Use `setLightsState:power:color:brightness:duration:completionHandler:` instead.")
@@ -129,7 +107,7 @@ public class HTTPSession {
 	// MARK: Private Utils
     
     /// Performs an `HTTPRequest` with the given parameters and will complete with the an `HTTPResponse`.
-    private func perform<R: Encodable, T: Decodable>(request: HTTPRequest<R>, completion: @escaping (HTTPResponse<T>) -> Void) {
+    func perform<R: Encodable, T: Decodable>(request: HTTPRequest<R>, completion: @escaping (HTTPResponse<T>) -> Void) {
         if log {
             print(request)
         }
