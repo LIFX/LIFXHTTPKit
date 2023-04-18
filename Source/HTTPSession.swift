@@ -11,7 +11,7 @@ public class HTTPSession {
     
     public struct Defaults {
         public static let baseURL = URL(string: "https://api.lifx.com/v1/")!
-        public static let userAgent = "LIFXHTTPKit/\(LIFXHTTPKitVersionNumber)"
+        public static let userAgent = "LIFXHTTPKit/1.0"
         public static let timeout: TimeInterval = 5
     }
     
