@@ -24,9 +24,9 @@ public class LightTarget {
 	private var observers: [LightTargetObserver]
 	
 	private let client: Client
-	private var clientObserver: ClientObserver!
+	private var clientObserver: ClientObserver?
 	
-	init(client: Client, selector: LightTargetSelector, filter: @escaping LightTargetFilter) {
+    init(client: Client, selector: LightTargetSelector, filter: @escaping LightTargetFilter, addObserver: Bool) {
 		power = false
 		brightness = 0.0
 		color = Color(hue: 0, saturation: 0, kelvin: Color.defaultKelvin)
@@ -41,15 +41,19 @@ public class LightTarget {
 		observers = []
 		
 		self.client = client
-		clientObserver = client.addObserver { [unowned self] (lights) in
-			self.updateLights(lights)
-		}
+        if addObserver {
+            clientObserver = client.addObserver { [unowned self] (lights) in
+                self.updateLights(lights)
+            }
+        }
 		
 		updateLights(client.lights)
 	}
 	
 	deinit {
-		client.removeObserver(observer: clientObserver)
+        if let clientObserver {
+            client.removeObserver(observer: clientObserver)
+        }
 	}
 	
 	// MARK: Observers

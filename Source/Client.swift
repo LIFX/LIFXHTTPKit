@@ -105,8 +105,8 @@ public class Client {
 		}
 	}
 	
-	public func allLightTarget() -> LightTarget {
-		return lightTargetWithSelector(LightTargetSelector(type: .All))
+	public func allLightTarget(observeChanges: Bool = true) -> LightTarget {
+		return lightTargetWithSelector(LightTargetSelector(type: .All), observeChanges: observeChanges)
 	}
 	
     /// Creates a target for API requests with the given selector. If an ID selector is specified and the Light is not already
@@ -114,7 +114,7 @@ public class Client {
     ///
     /// - Parameter selector: Selector referring to a Scene/Group/Light etc.
     /// - Returns: LightTarget which can be used to trigger API requests against the specified Selector
-	public func lightTargetWithSelector(_ selector: LightTargetSelector) -> LightTarget {
+    public func lightTargetWithSelector(_ selector: LightTargetSelector, observeChanges: Bool = true) -> LightTarget {
         switch selector.type {
         case .ID:
             // Add light to cache if not already present
@@ -123,7 +123,7 @@ public class Client {
             }
         default: break
         }
-		return LightTarget(client: self, selector: selector, filter: selectorToFilter(selector))
+		return LightTarget(client: self, selector: selector, filter: selectorToFilter(selector), addObserver: observeChanges)
 	}
 	
 	func addObserver(lightsDidUpdateHandler: @escaping ClientObserver.LightsDidUpdate) -> ClientObserver {
